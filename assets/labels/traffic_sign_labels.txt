@@ -1,0 +1,6 @@
+Speed Limit 30
+Speed Limit 50
+Stop Sign
+Yield
+No Entry
+Priority Road

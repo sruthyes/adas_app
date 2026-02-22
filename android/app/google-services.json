@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "790058877029",
+    "project_id": "adas-cfb74",
+    "storage_bucket": "adas-cfb74.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:790058877029:android:90b25cb0b380ea3044868c",
+        "android_client_info": {
+          "package_name": "com.example.adas_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCsv7banMjajjja5Uozoy5GZQ3QyKL9LZU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:790058877029:android:5a38cda3864d6d0544868c",
+        "android_client_info": {
+          "package_name": "com.nexra.adas_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCsv7banMjajjja5Uozoy5GZQ3QyKL9LZU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

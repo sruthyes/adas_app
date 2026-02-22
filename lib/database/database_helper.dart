@@ -1,0 +1,5 @@
+CREATE TABLE events(
+ id INTEGER PRIMARY KEY,
+ type TEXT,
+ time TEXT
+);
