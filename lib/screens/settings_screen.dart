@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../services/auth_service.dart';
+import '../screens/edit_profile_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -12,6 +13,7 @@ class SettingsScreen extends StatefulWidget {
 class _SettingsScreenState extends State<SettingsScreen>
     with SingleTickerProviderStateMixin {
   final AuthService _authService = AuthService();
+  String _userName = "Driver";
 
   // ADAS toggles
   bool _enableLaneDetection = true;
@@ -39,8 +41,20 @@ class _SettingsScreenState extends State<SettingsScreen>
     _slideAnim = Tween<Offset>(begin: const Offset(0, 0.05), end: Offset.zero)
         .animate(CurvedAnimation(parent: _animController, curve: Curves.easeOut));
     _animController.forward();
+    _loadUserName();
   }
+    Future<void> _loadUserName() async {
+      final user = _authService.currentUser;
+      if (user == null) return;
 
+      final data = await _authService.getUserData(user.uid);
+
+      if (data != null && mounted) {
+        setState(() {
+          _userName = data.name;
+        });
+      }
+    }
   @override
   void dispose() {
     _animController.dispose();
@@ -247,66 +261,88 @@ class _SettingsScreenState extends State<SettingsScreen>
     );
   }
 
-  Widget _buildProfileCard(_SettingsTheme theme) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: theme.isDark
-              ? [const Color(0xFF1E3A8A), const Color(0xFF2563EB)]
-              : [const Color(0xFF2563EB), const Color(0xFF3B82F6)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(22),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF3B82F6).withOpacity(0.35),
-            blurRadius: 18,
-            offset: const Offset(0, 6),
-          ),
-        ],
+Widget _buildProfileCard(_SettingsTheme theme) {
+  return Container(
+    padding: const EdgeInsets.all(20),
+    decoration: BoxDecoration(
+      gradient: LinearGradient(
+        colors: theme.isDark
+            ? [const Color(0xFF1E3A8A), const Color(0xFF2563EB)]
+            : [const Color(0xFF2563EB), const Color(0xFF3B82F6)],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
       ),
-      child: Row(
-        children: [
-          Container(
-            width: 56,
-            height: 56,
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.2),
-              shape: BoxShape.circle,
-              border: Border.all(color: Colors.white.withOpacity(0.3), width: 2),
-            ),
-            child: const Icon(Icons.person_rounded, color: Colors.white, size: 28),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Driver Profile',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 17,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: -0.2,
-                  ),
-                ),
-                const SizedBox(height: 3),
-                Text(
-                  'ADAS monitoring active',
-                  style: TextStyle(
-                    color: Colors.white.withOpacity(0.75),
-                    fontSize: 13,
-                    fontWeight: FontWeight.w400,
-                  ),
-                ),
-              ],
+      borderRadius: BorderRadius.circular(22),
+      boxShadow: [
+        BoxShadow(
+          color: const Color(0xFF3B82F6).withOpacity(0.35),
+          blurRadius: 18,
+          offset: const Offset(0, 6),
+        ),
+      ],
+    ),
+    child: Row(
+      children: [
+        // Avatar
+        Container(
+          width: 56,
+          height: 56,
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.2),
+            shape: BoxShape.circle,
+            border: Border.all(
+              color: Colors.white.withOpacity(0.3),
+              width: 2,
             ),
           ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          child: const Icon(
+            Icons.person_rounded,
+            color: Colors.white,
+            size: 28,
+          ),
+        ),
+
+        const SizedBox(width: 16),
+
+        // Name + Status
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                _userName,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 17,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: -0.2,
+                ),
+              ),
+              const SizedBox(height: 3),
+              Text(
+                'ADAS monitoring active',
+                style: TextStyle(
+                  color: Colors.white.withOpacity(0.75),
+                  fontSize: 13,
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        // Edit Button
+        GestureDetector(
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => const EditProfileScreen(),
+              ),
+            ).then((_) => _loadUserName());
+          },
+          child: Container(
+            padding:
+                const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
               color: Colors.white.withOpacity(0.18),
               borderRadius: BorderRadius.circular(20),
@@ -320,10 +356,11 @@ class _SettingsScreenState extends State<SettingsScreen>
               ),
             ),
           ),
-        ],
-      ),
-    );
-  }
+        ),
+      ],
+    ),
+  );
+}
 
   Widget _buildSignOutButton(_SettingsTheme theme) {
     return GestureDetector(

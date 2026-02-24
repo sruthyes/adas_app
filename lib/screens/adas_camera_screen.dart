@@ -5,7 +5,6 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:image/image.dart' as img;
 import 'package:flutter_tts/flutter_tts.dart';
 
-
 // Existing services
 import '../services/lane_detection_service.dart';
 import '../services/collision_warning_service.dart';
@@ -29,7 +28,6 @@ class ADASCameraScreen extends StatefulWidget {
 
 class _ADASCameraScreenState extends State<ADASCameraScreen>
     with WidgetsBindingObserver {
-
 
   // ---------------- YOLO ----------------
   final YoloService _yoloService = YoloService();
@@ -86,7 +84,7 @@ class _ADASCameraScreenState extends State<ADASCameraScreen>
 
     Future.microtask(() async {
       await _initializeServices();
-      await _yoloService.loadModel();   // Load YOLO once
+      await _yoloService.loadModel();
       await _initializeCamera();
     });
   }
@@ -95,9 +93,12 @@ class _ADASCameraScreenState extends State<ADASCameraScreen>
     try {
       final laneService = context.read<LaneDetectionService>();
       final collisionService = context.read<CollisionWarningService>();
-      final drowsinessService = context.read<DrowsinessDetectionService>();
-      final trafficSignService = context.read<TrafficSignService>();
-      final potholeService = context.read<PotholeDetectionService>();
+      final drowsinessService =
+          context.read<DrowsinessDetectionService>();
+      final trafficSignService =
+          context.read<TrafficSignService>();
+      final potholeService =
+          context.read<PotholeDetectionService>();
 
       await Future.wait([
         laneService.initialize(),
@@ -108,9 +109,7 @@ class _ADASCameraScreenState extends State<ADASCameraScreen>
       ]);
 
       if (mounted) {
-        setState(() {
-          _servicesInitialized = true;
-        });
+        setState(() => _servicesInitialized = true);
       }
     } catch (e) {
       print("Service init error: $e");
@@ -123,7 +122,8 @@ class _ADASCameraScreenState extends State<ADASCameraScreen>
     _cameras = await availableCameras();
 
     final index = _isFrontCamera ? 1 : 0;
-    final actualIndex = index < _cameras!.length ? index : 0;
+    final actualIndex =
+        index < _cameras!.length ? index : 0;
 
     _cameraController = CameraController(
       _cameras![actualIndex],
@@ -134,9 +134,7 @@ class _ADASCameraScreenState extends State<ADASCameraScreen>
     await _cameraController!.initialize();
 
     if (mounted) {
-      setState(() {
-        _isCameraInitialized = true;
-      });
+      setState(() => _isCameraInitialized = true);
 
       if (_servicesInitialized) {
         _startImageStream();
@@ -145,52 +143,60 @@ class _ADASCameraScreenState extends State<ADASCameraScreen>
   }
 
   void _startImageStream() {
-    _cameraController?.startImageStream((CameraImage image) {
-      if (_isProcessing) return;
+    _cameraController?.startImageStream(
+      (CameraImage image) {
+        if (_isProcessing) return;
 
-      final now = DateTime.now();
-      if (_lastInferenceTime != null &&
-          now.difference(_lastInferenceTime!) <
-              _minInferenceInterval) {
-        return;
-      }
+        final now = DateTime.now();
+        if (_lastInferenceTime != null &&
+            now.difference(_lastInferenceTime!) <
+                _minInferenceInterval) {
+          return;
+        }
 
-      _lastInferenceTime = now;
-      _isProcessing = true;
+        _lastInferenceTime = now;
+        _isProcessing = true;
 
-      _processFrame(image).whenComplete(() {
-        _isProcessing = false;
-      });
-    });
+        _processFrame(image)
+            .whenComplete(() => _isProcessing = false);
+      },
+    );
   }
 
   // ================= IMAGE CONVERSION =================
 
-  img.Image _convertCameraImage(CameraImage cameraImage) {
+  img.Image _convertCameraImage(
+      CameraImage cameraImage) {
     final width = cameraImage.width;
     final height = cameraImage.height;
 
-    final image = img.Image(width: width, height: height);
+    final image = img.Image(
+        width: width, height: height);
+
     final plane = cameraImage.planes[0].bytes;
 
     int index = 0;
     for (int y = 0; y < height; y++) {
       for (int x = 0; x < width; x++) {
         final pixel = plane[index++];
-        image.setPixelRgb(x, y, pixel, pixel, pixel);
+        image.setPixelRgb(
+            x, y, pixel, pixel, pixel);
       }
     }
 
     return image;
   }
 
-  // ================= MAIN FRAME PROCESSING =================
+  // ================= FRAME PROCESSING =================
 
-  Future<void> _processFrame(CameraImage image) async {
+  Future<void> _processFrame(
+      CameraImage image) async {
     if (!_servicesInitialized) return;
 
-    final laneService = context.read<LaneDetectionService>();
-    final collisionService = context.read<CollisionWarningService>();
+    final laneService =
+        context.read<LaneDetectionService>();
+    final collisionService =
+        context.read<CollisionWarningService>();
     final drowsinessService =
         context.read<DrowsinessDetectionService>();
     final trafficSignService =
@@ -199,43 +205,50 @@ class _ADASCameraScreenState extends State<ADASCameraScreen>
         context.read<PotholeDetectionService>();
 
     if (_isFrontCamera) {
-        final result =
-            await drowsinessService.detectDrowsiness(image);
+      final result =
+          await drowsinessService
+              .detectDrowsiness(image);
 
-        if (mounted) {
-          setState(() => _drowsinessDetected = result);
-        }
+      if (mounted) {
+        setState(() =>
+            _drowsinessDetected = result);
+      }
 
-        if (result) {
+      if (result) {
         await _playBeep();
 
         if (_lastDrowsyAlertTime == null ||
-            DateTime.now().difference(_lastDrowsyAlertTime!) >
+            DateTime.now().difference(
+                    _lastDrowsyAlertTime!) >
                 const Duration(minutes: 10)) {
-
           _showDrowsyDialog();
-          _lastDrowsyAlertTime = DateTime.now();
+          _lastDrowsyAlertTime =
+              DateTime.now();
         }
-      } else {
+      }
+    } else {
       final laneResult =
           await laneService.detectLanes(image);
 
       final collisionResult =
-          await collisionService.detectCollision(image);
+          await collisionService
+              .detectCollision(image);
 
       final trafficSignResult =
-          await trafficSignService.detectTrafficSigns(image);
+          await trafficSignService
+              .detectTrafficSigns(image);
 
       final potholeResult =
-          await potholeService.detectPotholes(image);
+          await potholeService
+              .detectPotholes(image);
 
-      // ---------------- YOLO DETECTION ----------------
       if (_yoloService.isLoaded) {
-        final img.Image rgbImage =
+        final rgbImage =
             _convertCameraImage(image);
 
         final detections =
-            await _yoloService.detect(rgbImage);
+            await _yoloService
+                .detect(rgbImage);
 
         if (mounted) {
           setState(() {
@@ -246,9 +259,8 @@ class _ADASCameraScreenState extends State<ADASCameraScreen>
         for (final det in detections) {
           if (det.score > 0.6 &&
               (det.classId == 2 ||
-               det.classId == 5 ||
-               det.classId == 7)) {
-            print("YOLO: Vehicle detected");
+                  det.classId == 5 ||
+                  det.classId == 7)) {
             await _playBeep();
             break;
           }
@@ -258,16 +270,23 @@ class _ADASCameraScreenState extends State<ADASCameraScreen>
       if (mounted) {
         setState(() {
           _laneDetected = laneResult;
-          _collisionWarningResult = collisionResult;
-          _trafficSignDetected = trafficSignResult;
-          _potholeDetected = potholeResult;
+          _collisionWarningResult =
+              collisionResult;
+          _trafficSignDetected =
+              trafficSignResult;
+          _potholeDetected =
+              potholeResult;
           _laneDepartureDetected =
-              laneService.laneDepartureDetected;
-          _laneOffset = laneService.lastOffset;
+              laneService
+                  .laneDepartureDetected;
+          _laneOffset =
+              laneService.lastOffset;
         });
       }
 
-      if (_laneDepartureDetected) await _playBeep();
+      if (_laneDepartureDetected)
+        await _playBeep();
+
       if (collisionResult.level ==
           CollisionWarningLevel.high) {
         await _playBeep();
@@ -277,40 +296,42 @@ class _ADASCameraScreenState extends State<ADASCameraScreen>
 
   Future<void> _playBeep() async {
     await _audioPlayer.play(
-      AssetSource("sounds/beep.mp3"),
+        AssetSource("sounds/beep.mp3"));
+  }
+
+  Future<void> _showDrowsyDialog() async {
+    await _flutterTts.speak(
+        "You seem tired. Please consider taking a break.");
+
+    if (!mounted) return;
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => AlertDialog(
+        title:
+            const Text("Drowsiness Alert"),
+        content: const Text(
+            "You seem tired. Find nearby rest stops?"),
+        actions: [
+          TextButton(
+            onPressed: () =>
+                Navigator.pop(context),
+            child: const Text("NO"),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              NearbyRestaurantHelper
+                  .showNearby(context);
+            },
+            child: const Text("YES"),
+          ),
+        ],
+      ),
     );
   }
-    Future<void> _showDrowsyDialog() async {
-        await _flutterTts.speak("You seem tired. Please consider taking a break.");
 
-        if (!mounted) return;
-
-        showDialog(
-          context: context,
-          barrierDismissible: false,
-          builder: (_) => AlertDialog(
-            title: const Text("Drowsiness Alert"),
-            content: const Text(
-              "You seem tired. Find nearby rest stops?",
-            ),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                },
-                child: const Text("NO"),
-              ),
-              ElevatedButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                  NearbyRestaurantHelper.showNearby(context);
-                },
-                child: const Text("YES"),
-              ),
-            ],
-          ),
-        );
-      }
   void _toggleCamera() async {
     _isFrontCamera = !_isFrontCamera;
     await _cameraController?.dispose();
@@ -322,14 +343,16 @@ class _ADASCameraScreenState extends State<ADASCameraScreen>
 
   @override
   Widget build(BuildContext context) {
-    final isReady = _cameraController != null &&
-        _isCameraInitialized &&
-        _servicesInitialized;
+    final isReady =
+        _cameraController != null &&
+            _isCameraInitialized &&
+            _servicesInitialized;
 
     if (!isReady) {
       return const Scaffold(
         body: Center(
-          child: CircularProgressIndicator(),
+          child:
+              CircularProgressIndicator(),
         ),
       );
     }
@@ -337,19 +360,27 @@ class _ADASCameraScreenState extends State<ADASCameraScreen>
     return Scaffold(
       body: Stack(
         children: [
-          CameraPreview(_cameraController!),
+          CameraPreview(
+              _cameraController!),
 
           CustomPaint(
-            painter: YoloPainter(_yoloResults),
+            painter:
+                YoloPainter(_yoloResults),
           ),
 
           ADASOverlay(
-            laneDetected: _laneDetected,
-            collisionWarning: _collisionWarningResult,
-            drowsinessDetected: _drowsinessDetected,
-            trafficSignDetected: _trafficSignDetected,
-            potholeDetected: _potholeDetected,
-            isDriverFacing: _isFrontCamera,
+            laneDetected:
+                _laneDetected,
+            collisionWarning:
+                _collisionWarningResult,
+            drowsinessDetected:
+                _drowsinessDetected,
+            trafficSignDetected:
+                _trafficSignDetected,
+            potholeDetected:
+                _potholeDetected,
+            isDriverFacing:
+                _isFrontCamera,
           ),
 
           Positioned(
@@ -358,18 +389,21 @@ class _ADASCameraScreenState extends State<ADASCameraScreen>
             right: 0,
             child: Row(
               mainAxisAlignment:
-                  MainAxisAlignment.spaceEvenly,
+                  MainAxisAlignment
+                      .spaceEvenly,
               children: [
                 FloatingActionButton(
                   heroTag: "back",
                   onPressed: () =>
-                      Navigator.pop(context),
-                  child:
-                      const Icon(Icons.arrow_back),
+                      Navigator.pop(
+                          context),
+                  child: const Icon(
+                      Icons.arrow_back),
                 ),
                 FloatingActionButton(
                   heroTag: "switch",
-                  onPressed: _toggleCamera,
+                  onPressed:
+                      _toggleCamera,
                   child: const Icon(
                       Icons.switch_camera),
                 ),
@@ -383,7 +417,8 @@ class _ADASCameraScreenState extends State<ADASCameraScreen>
 
   @override
   void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
+    WidgetsBinding.instance
+        .removeObserver(this);
     _cameraController?.dispose();
     _audioPlayer.dispose();
     super.dispose();
