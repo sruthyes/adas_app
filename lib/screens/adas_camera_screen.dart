@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+/*import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
 import 'package:provider/provider.dart';
 import 'package:audioplayers/audioplayers.dart';
@@ -84,7 +84,7 @@ class _ADASCameraScreenState extends State<ADASCameraScreen>
 
     Future.microtask(() async {
       await _initializeServices();
-      await _yoloService.loadModel();
+      //await _yoloService.loadModel();
       await _initializeCamera();
     });
   }
@@ -92,7 +92,7 @@ class _ADASCameraScreenState extends State<ADASCameraScreen>
   Future<void> _initializeServices() async {
     try {
       final laneService = context.read<LaneDetectionService>();
-      final collisionService = context.read<CollisionWarningService>();
+      /*final collisionService = context.read<CollisionWarningService>();
       final drowsinessService =
           context.read<DrowsinessDetectionService>();
       final trafficSignService =
@@ -101,13 +101,13 @@ class _ADASCameraScreenState extends State<ADASCameraScreen>
           context.read<PotholeDetectionService>();
 
       await Future.wait([
-        laneService.initialize(),
+        //laneService.initialize(),
         collisionService.initialize(),
         drowsinessService.initialize(),
         trafficSignService.initialize(),
         potholeService.initialize(),
-      ]);
-
+      ]);*/
+      
       if (mounted) {
         setState(() => _servicesInitialized = true);
       }
@@ -195,7 +195,7 @@ class _ADASCameraScreenState extends State<ADASCameraScreen>
 
     final laneService =
         context.read<LaneDetectionService>();
-    final collisionService =
+    /* final collisionService =
         context.read<CollisionWarningService>();
     final drowsinessService =
         context.read<DrowsinessDetectionService>();
@@ -226,23 +226,17 @@ class _ADASCameraScreenState extends State<ADASCameraScreen>
               DateTime.now();
         }
       }
-    } else {
+    } else {*/
       final laneResult =
           await laneService.detectLanes(image);
 
-      final collisionResult =
-          await collisionService
-              .detectCollision(image);
+      //final collisionResult = await collisionService.detectCollision(image);
 
-      final trafficSignResult =
-          await trafficSignService
-              .detectTrafficSigns(image);
+      //final trafficSignResult =await trafficSignService.detectTrafficSigns(image);
 
-      final potholeResult =
-          await potholeService
-              .detectPotholes(image);
+      //final potholeResult =await potholeService.detectPotholes(image);
 
-      if (_yoloService.isLoaded) {
+      /*if (_yoloService.isLoaded) {
         final rgbImage =
             _convertCameraImage(image);
 
@@ -265,17 +259,17 @@ class _ADASCameraScreenState extends State<ADASCameraScreen>
             break;
           }
         }
-      }
+      }*/
 
       if (mounted) {
         setState(() {
           _laneDetected = laneResult;
-          _collisionWarningResult =
+         /* _collisionWarningResult =
               collisionResult;
           _trafficSignDetected =
               trafficSignResult;
           _potholeDetected =
-              potholeResult;
+              potholeResult;*/
           _laneDepartureDetected =
               laneService
                   .laneDepartureDetected;
@@ -284,20 +278,28 @@ class _ADASCameraScreenState extends State<ADASCameraScreen>
         });
       }
 
-      if (_laneDepartureDetected)
-        await _playBeep();
+      // -------- Lane Departure Beep with Cooldown --------
+        final now = DateTime.now();
+        if (_laneDepartureDetected) {
+          if (_lastInferenceTime == null ||
+              now.difference(_lastInferenceTime!) >
+                  const Duration(seconds: 2)) {
+            await _playBeep();
+            _lastInferenceTime = now;
+          }
+        }
 
-      if (collisionResult.level ==
+     /* if (collisionResult.level ==
           CollisionWarningLevel.high) {
         await _playBeep();
       }
     }
-  }
+  
 
-  Future<void> _playBeep() async {
-    await _audioPlayer.play(
-        AssetSource("sounds/beep.mp3"));
-  }
+      Future<void> _playBeep() async {
+        await _audioPlayer.play(
+            AssetSource("sounds/beep.mp3"));
+      }
 
   Future<void> _showDrowsyDialog() async {
     await _flutterTts.speak(
@@ -337,7 +339,7 @@ class _ADASCameraScreenState extends State<ADASCameraScreen>
     await _cameraController?.dispose();
     _isCameraInitialized = false;
     await _initializeCamera();
-  }
+  }*/
 
   // ================= UI =================
 
@@ -371,6 +373,8 @@ class _ADASCameraScreenState extends State<ADASCameraScreen>
           ADASOverlay(
             laneDetected:
                 _laneDetected,
+                laneDepartureDetected: _laneDepartureDetected,
+                laneOffset: _laneOffset,
             collisionWarning:
                 _collisionWarningResult,
             drowsinessDetected:
@@ -419,6 +423,160 @@ class _ADASCameraScreenState extends State<ADASCameraScreen>
   void dispose() {
     WidgetsBinding.instance
         .removeObserver(this);
+    _cameraController?.dispose();
+    _audioPlayer.dispose();
+    super.dispose();
+  }
+}
+*/
+
+
+import 'package:flutter/material.dart';
+import 'package:camera/camera.dart';
+import 'package:provider/provider.dart';
+import 'package:audioplayers/audioplayers.dart';
+
+import '../services/lane_detection_service.dart';
+import '../widgets/adas_overlay.dart';
+
+class ADASCameraScreen extends StatefulWidget {
+  const ADASCameraScreen({super.key});
+
+  @override
+  State<ADASCameraScreen> createState() => _ADASCameraScreenState();
+}
+
+class _ADASCameraScreenState extends State<ADASCameraScreen>
+    with WidgetsBindingObserver {
+
+  CameraController? _cameraController;
+  bool _isCameraInitialized = false;
+  bool _servicesInitialized = false;
+  bool _isProcessing = false;
+
+  bool _laneDetected = false;
+  bool _laneDepartureDetected = false;
+  double _laneOffset = 0.0;
+
+  late final AudioPlayer _audioPlayer;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+
+    _audioPlayer = AudioPlayer();
+
+    Future.microtask(() async {
+      await _initializeServices();
+      await _initializeCamera();
+    });
+  }
+
+  Future<void> _initializeServices() async {
+    setState(() {
+      _servicesInitialized = true;
+    });
+  }
+
+  Future<void> _initializeCamera() async {
+    final cameras = await availableCameras();
+
+    _cameraController = CameraController(
+      cameras.first,
+      ResolutionPreset.medium,
+      enableAudio: false,
+    );
+
+    await _cameraController!.initialize();
+
+    if (!mounted) return;
+
+    setState(() {
+      _isCameraInitialized = true;
+    });
+
+    _startImageStream();
+  }
+
+  void _startImageStream() {
+    _cameraController?.startImageStream((CameraImage image) async {
+      if (_isProcessing) return;
+      _isProcessing = true;
+
+      await _processFrame(image);
+
+      _isProcessing = false;
+    });
+  }
+
+  Future<void> _processFrame(CameraImage image) async {
+    if (!_servicesInitialized) return;
+
+    final laneService = context.read<LaneDetectionService>();
+
+    final laneResult = await laneService.detectLanes(image);
+
+    if (!mounted) return;
+
+    setState(() {
+      _laneDetected = laneResult;
+      _laneDepartureDetected = laneService.laneDepartureDetected;
+      _laneOffset = laneService.lastOffset;
+    });
+
+    if (_laneDepartureDetected) {
+      await _playBeep();
+    }
+  }
+
+  Future<void> _playBeep() async {
+    await _audioPlayer.play(AssetSource("sounds/beep.mp3"));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_cameraController == null ||
+        !_isCameraInitialized ||
+        !_servicesInitialized) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    return Scaffold(
+      body: Stack(
+        children: [
+          CameraPreview(_cameraController!),
+          ADASOverlay(
+            laneDetected: _laneDetected,
+            laneDepartureDetected: _laneDepartureDetected,
+            laneOffset: _laneOffset,
+            collisionWarning: null,
+            drowsinessDetected: false,
+            trafficSignDetected: null,
+            potholeDetected: false,
+            isDriverFacing: false,
+          ),
+          Positioned(
+            bottom: 30,
+            left: 0,
+            right: 0,
+            child: Center(
+              child: FloatingActionButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Icon(Icons.arrow_back),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _cameraController?.dispose();
     _audioPlayer.dispose();
     super.dispose();

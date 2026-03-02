@@ -1,7 +1,10 @@
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../providers/adas_state.dart';
 import '../services/auth_service.dart';
 import 'adas_camera_screen.dart';
+
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -13,7 +16,7 @@ class DashboardScreen extends StatefulWidget {
 class _DashboardScreenState extends State<DashboardScreen>
     with SingleTickerProviderStateMixin {
   final AuthService _authService = AuthService();
-  bool _adasActive = false;
+  //bool _adasActive = false;
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
@@ -54,7 +57,7 @@ class _DashboardScreenState extends State<DashboardScreen>
     super.dispose();
   }
 
-  void _toggleADAS() {
+  /*void _toggleADAS() {
     setState(() => _adasActive = !_adasActive);
     if (_adasActive) {
       if (kIsWeb) {
@@ -69,7 +72,7 @@ class _DashboardScreenState extends State<DashboardScreen>
       }
       _showSnackBar('ADAS services stopped', Icons.info, Colors.grey);
     }
-  }
+  }*/
 
   void _showSnackBar(String message, IconData icon, Color color) {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -103,7 +106,10 @@ class _DashboardScreenState extends State<DashboardScreen>
   Widget build(BuildContext context) {
     // Automatically adapts to system theme
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final theme = _AppTheme(isDark: isDark, adasActive: _adasActive);
+    //new
+    final adasState = context.watch<AdasState>();
+    //final theme = _AppTheme(isDark: isDark, adasActive: _adasActive);
+    final theme = _AppTheme(isDark: isDark, adasActive: adasState.isActive);
 
     return Scaffold(
       backgroundColor: theme.background,
@@ -197,6 +203,7 @@ class _DashboardScreenState extends State<DashboardScreen>
   }
 
   Widget _buildStatusCard(_AppTheme theme) {
+    final adasState = context.watch<AdasState>();
     return AnimatedContainer(
       duration: const Duration(milliseconds: 500),
       curve: Curves.easeInOut,
@@ -204,7 +211,7 @@ class _DashboardScreenState extends State<DashboardScreen>
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: _adasActive
+          colors: adasState.isActive
               ? [const Color(0xFF1D4ED8), const Color(0xFF2563EB), const Color(0xFF3B82F6)]
               : theme.isDark
                   ? [const Color(0xFF1E293B), const Color(0xFF334155)]
@@ -213,7 +220,7 @@ class _DashboardScreenState extends State<DashboardScreen>
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: _adasActive
+            color: adasState.isActive
                 ? const Color(0xFF3B82F6).withOpacity(0.35)
                 : Colors.black.withOpacity(0.1),
             blurRadius: 20,
@@ -231,12 +238,12 @@ class _DashboardScreenState extends State<DashboardScreen>
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
+                    children:[
                       Text(
                         'System Status',
                         style: TextStyle(
                           fontSize: 13,
-                          color: _adasActive
+                          color: adasState.isActive
                               ? Colors.white70
                               : theme.textSecondary,
                           fontWeight: FontWeight.w500,
@@ -251,13 +258,13 @@ class _DashboardScreenState extends State<DashboardScreen>
                             width: 10,
                             height: 10,
                             decoration: BoxDecoration(
-                              color: _adasActive
+                              color: adasState.isActive
                                   ? const Color(0xFF4ADE80)
                                   : const Color(0xFFEF4444),
                               shape: BoxShape.circle,
                               boxShadow: [
                                 BoxShadow(
-                                  color: (_adasActive
+                                  color: (adasState.isActive
                                       ? const Color(0xFF4ADE80)
                                       : const Color(0xFFEF4444))
                                       .withOpacity(0.6),
@@ -269,10 +276,10 @@ class _DashboardScreenState extends State<DashboardScreen>
                           ),
                           const SizedBox(width: 10),
                           Text(
-                            _adasActive ? 'Active & Monitoring' : 'Inactive',
+                            adasState.isActive ? 'Active & Monitoring' : 'Inactive',
                             style: TextStyle(
                               fontSize: 22,
-                              color: _adasActive ? Colors.white : theme.textPrimary,
+                              color: adasState.isActive ? Colors.white : theme.textPrimary,
                               fontWeight: FontWeight.w800,
                               letterSpacing: -0.3,
                             ),
@@ -282,16 +289,33 @@ class _DashboardScreenState extends State<DashboardScreen>
                     ],
                   ),
                 ),
-                _StyledSwitch(
+                /*_StyledSwitch(
                   value: _adasActive,
                   onChanged: (_) => _toggleADAS(),
-                ),
+                ),*/
+                //new
+                _StyledSwitch(
+                value: adasState.isActive,
+                onChanged: (_) {
+                  adasState.toggleAdas();
+
+                  if (adasState.isActive) {
+                    if (kIsWeb) {
+                      _showSnackBar('ADAS not supported on Web', Icons.warning_amber, Colors.orange);
+                      return;
+                    }
+                    _showSnackBar('ADAS services started', Icons.check_circle, Colors.green);
+                  } else {
+                    _showSnackBar('ADAS services stopped', Icons.info, Colors.grey);
+                  }
+                },
+              ),
               ],
             ),
             AnimatedSize(
               duration: const Duration(milliseconds: 400),
               curve: Curves.easeInOut,
-              child: _adasActive
+              child: adasState.isActive
                   ? Padding(
                       padding: const EdgeInsets.only(top: 20),
                       child: Container(
@@ -321,6 +345,7 @@ class _DashboardScreenState extends State<DashboardScreen>
   }
 
   Widget _buildSectionHeader(_AppTheme theme) {
+    final adasState = context.watch<AdasState>();
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -337,21 +362,21 @@ class _DashboardScreenState extends State<DashboardScreen>
           duration: const Duration(milliseconds: 300),
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
           decoration: BoxDecoration(
-            color: _adasActive
+            color: adasState.isActive
                 ? const Color(0xFF10B981).withOpacity(0.15)
                 : theme.surface,
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
-              color: _adasActive
+              color: adasState.isActive
                   ? const Color(0xFF10B981)
                   : theme.divider,
               width: 1.5,
             ),
           ),
           child: Text(
-            _adasActive ? '6 Active' : '0 Active',
+            adasState.isActive ? '6 Active' : '0 Active',
             style: TextStyle(
-              color: _adasActive ? const Color(0xFF10B981) : theme.textSecondary,
+              color: adasState.isActive ? const Color(0xFF10B981) : theme.textSecondary,
               fontWeight: FontWeight.w700,
               fontSize: 12,
               letterSpacing: 0.3,
@@ -363,6 +388,7 @@ class _DashboardScreenState extends State<DashboardScreen>
   }
 
   Widget _buildFeaturesGrid(_AppTheme theme) {
+    final adasState = context.watch<AdasState>();
     return GridView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
@@ -377,7 +403,7 @@ class _DashboardScreenState extends State<DashboardScreen>
         final f = _features[index];
         return _FeatureCard(
           data: f,
-          active: _adasActive,
+          active: adasState.isActive,
           theme: theme,
         );
       },
