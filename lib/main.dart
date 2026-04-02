@@ -8,6 +8,7 @@ import 'screens/auth_wrapper.dart';
 import 'services/auth_service.dart';
 import 'services/lane_detection_service.dart';
 import 'services/collision_warning_service.dart';
+import 'services/collision_logic_service.dart';
 import 'services/drowsiness_detection_service.dart';
 import 'services/traffic_sign_service.dart';
 import 'services/pothole_detection_service.dart';
@@ -77,13 +78,13 @@ class MyApp extends StatelessWidget {
         ),
 
         /// Collision Warning (Object Detection Based)
-        Provider<CollisionWarningService>(
-          create: (_) => CollisionWarningService(),
+        ChangeNotifierProvider<CollisionLogicService>(
+        create: (_) => CollisionLogicService(),
         ),
 
         /// Driver Drowsiness Detection
-        Provider<DrowsinessDetectionService>(
-          create: (_) => DrowsinessDetectionService(),
+        Provider<DrowsinessService>(
+          create: (_) => DrowsinessService(),
         ),
 
         /// Traffic Sign Detection (YOLO TFLite)

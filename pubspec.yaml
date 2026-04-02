@@ -17,6 +17,11 @@ dependencies:
 
   # Icons
   cupertino_icons: ^1.0.8
+
+  #mlkit dependencies
+  google_mlkit_face_detection: ^0.8.0
+  google_mlkit_object_detection: ^0.9.0
+  google_mlkit_image_labeling: ^0.8.0
   
   # Firebase dependencies
   firebase_core: ^4.2.0
@@ -28,7 +33,7 @@ dependencies:
   camera: ^0.11.0
   #opencv_dart: ^1.2.0
   tflite_flutter: ^0.11.0
-  #tflite_flutter_helper: ^0.3.3
+  #tflite_flutter_helper: ^0.2.0
   sensors_plus: ^3.0.0
   image: ^4.1.3
   
@@ -63,16 +68,17 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_launcher_icons: ^0.13.1
+  flutter_lints: ^6.0.0
 
 flutter_launcher_icons:
   android: true
   ios: true
-  image_path: "assets/icon/app_icon.jpg"
+  image_path: "assets/icon/app_icon_foreground.png"
   adaptive_icon_background: "#0A0E1A"  # your app's dark background color
-  adaptive_icon_foreground: "assets/icon/app_icon_foreground.jpg"
+  adaptive_icon_foreground: "assets/icon/app_icon_foreground.png"
   min_sdk_android: 21
   
-  flutter_lints: ^6.0.0
+  
 
 
 flutter:
@@ -80,8 +86,8 @@ flutter:
   #icons
   uses-material-design: true
   assets:
-    - assets/ml_models/
+    - assets/ml_models/yolov8s_int8.tflite
     - assets/sounds/
     - assets/labels/
 
-  
+path_provider: ^2.0.15

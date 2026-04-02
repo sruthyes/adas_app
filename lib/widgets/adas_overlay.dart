@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import '../services/collision_warning_service.dart';
+//import '../services/collision_warning_service.dart';
 
 class ADASOverlay extends StatelessWidget {
   final bool laneDetected;
   final bool laneDepartureDetected;
   final double laneOffset;
-  final CollisionWarningResult? collisionWarning;
+  //final CollisionWarningResult? collisionWarning;
   final bool drowsinessDetected;
   final String? trafficSignDetected;
   final bool potholeDetected;
@@ -16,7 +16,7 @@ class ADASOverlay extends StatelessWidget {
     required this.laneDetected,
     required this.laneDepartureDetected,
     required this.laneOffset,
-    required this.collisionWarning,
+    //required this.collisionWarning,
     required this.drowsinessDetected,
     required this.trafficSignDetected,
     required this.potholeDetected,
@@ -25,7 +25,7 @@ class ADASOverlay extends StatelessWidget {
 
   // ================= COLLISION HELPERS =================
 
-  Color _getCollisionWarningColor() {
+  /*Color _getCollisionWarningColor() {
     if (collisionWarning == null) { //can remove after the complete implementation
     return Colors.transparent;
   }
@@ -54,7 +54,7 @@ class ADASOverlay extends StatelessWidget {
       default:
         return '';
     }
-  }
+  }*/
 
   @override
   Widget build(BuildContext context) {
@@ -166,7 +166,7 @@ class ADASOverlay extends StatelessWidget {
           ),
 
         // ================= COLLISION WARNING =================
-        if (collisionWarning != null &&
+      /*  if (collisionWarning != null &&
     collisionWarning!.level != CollisionWarningLevel.none)
           Container(
             decoration: BoxDecoration(
@@ -226,7 +226,7 @@ class ADASOverlay extends StatelessWidget {
                 ),
               ),
             ),
-          ),
+          ),*/
 
         // ================= DROWSINESS =================
         if (drowsinessDetected)

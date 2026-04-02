@@ -1,88 +1,77 @@
-import 'package:camera/camera.dart';
-import 'package:flutter/services.dart';
-import 'package:tflite_flutter/tflite_flutter.dart';
-import '../utils/image_preprocessor.dart';
+import 'package:image/image.dart' as img;
+import '../models/traffic_sign_detection.dart';
 
 class TrafficSignService {
-  Interpreter? _interpreter;
-  bool _initialized = false;
-  late List<String> _labels;
 
-  static const int inputSize = 640;
-  static const double confidenceThreshold = 0.4;
+  TrafficSignDetection? detectTrafficSign(img.Image image) {
 
-  Future<void> initialize() async {
-    if (_initialized) return;
+    int minX = image.width;
+    int minY = image.height;
+    int maxX = 0;
+    int maxY = 0;
 
-    try {
-      _interpreter = await Interpreter.fromAsset(
-        'assets/ml_models/traffic_signs.tflite',
-      );
+    int colorPixelCount = 0;
+    String label = "";
 
-      final labelData =
-          await rootBundle.loadString('assets/labels/traffic_sign_labels.txt');
+    for (int y = 0; y < image.height; y += 3) {
+      for (int x = 0; x < image.width; x += 3) {
 
-      _labels = labelData
-          .split('\n')
-          .map((e) => e.trim())
-          .where((e) => e.isNotEmpty)
-          .toList();
+        final pixel = image.getPixel(x, y);
 
-      _initialized = true;
-      print('TrafficSignService initialized');
-    } catch (e) {
-      print('TrafficSignService init error: $e');
-      _initialized = false;
-    }
-  }
+        int r = pixel.r.toInt();
+        int g = pixel.g.toInt();
+        int b = pixel.b.toInt();
 
-  Future<String?> detectTrafficSigns(CameraImage image) async {
-    if (!_initialized || _interpreter == null) return null;
+        bool detectedColor = false;
 
-    /// 1️⃣ Convert CameraImage → YOLO input tensor
-    final input = ImagePreprocessor.yuv420ToRgbInput4D(
-      image,
-      inputSize,
-      inputSize,
-    ); // shape: [1, 640, 640, 3]
+        if (_isRed(r, g, b)) {
+          label = "STOP / PROHIBITION";
+          detectedColor = true;
+        } 
+        else if (_isYellow(r, g, b)) {
+          label = "WARNING SIGN";
+          detectedColor = true;
+        } 
+        else if (_isBlue(r, g, b)) {
+          label = "INFORMATION SIGN";
+          detectedColor = true;
+        }
 
-    /// 2️⃣ YOLO output tensor: [1, 22, 8400]
-    final output = List.generate(
-      1,
-      (_) => List.generate(22, (_) => List.filled(8400, 0.0)),
-    );
+        if (detectedColor) {
 
-    /// 3️⃣ Run inference
-    _interpreter!.run(input, output);
+          colorPixelCount++;
 
-    /// 4️⃣ Decode detections
-    double bestScore = 0.0;
-    int bestClass = -1;
-
-    for (int i = 0; i < 8400; i++) {
-      final objectness = output[0][4][i];
-      if (objectness < confidenceThreshold) continue;
-
-      for (int c = 5; c < 22; c++) {
-        final score = objectness * output[0][c][i];
-        if (score > bestScore) {
-          bestScore = score;
-          bestClass = c - 5;
+          if (x < minX) minX = x;
+          if (y < minY) minY = y;
+          if (x > maxX) maxX = x;
+          if (y > maxY) maxY = y;
         }
       }
     }
 
-    if (bestClass >= 0 && bestClass < _labels.length) {
-      final label = _labels[bestClass];
-      print('Traffic sign detected: $label ($bestScore)');
-      return label;
+    if (colorPixelCount > 200) {
+
+      return TrafficSignDetection(
+        x: minX.toDouble(),
+        y: minY.toDouble(),
+        width: (maxX - minX).toDouble(),
+        height: (maxY - minY).toDouble(),
+        label: label,
+      );
     }
 
     return null;
   }
 
-  void dispose() {
-    _interpreter?.close();
-    _interpreter = null;
+  bool _isRed(int r, int g, int b) {
+    return r > 180 && g < 100 && b < 100;
+  }
+
+  bool _isYellow(int r, int g, int b) {
+    return r > 180 && g > 180 && b < 100;
+  }
+
+  bool _isBlue(int r, int g, int b) {
+    return b > 150 && r < 120 && g < 120;
   }
 }

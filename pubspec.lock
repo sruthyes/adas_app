@@ -358,6 +358,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.13.1"
+  flutter_lints:
+    dependency: "direct dev"
+    description:
+      name: flutter_lints
+      sha256: "3105dc8492f6183fb076ccf1f351ac3d60564bff92e20bfc4af9cc1651f4e7e1"
+      url: "https://pub.dev"
+    source: hosted
+    version: "6.0.0"
   flutter_local_notifications:
     dependency: "direct main"
     description:
@@ -528,6 +536,38 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.5.14+2"
+  google_mlkit_commons:
+    dependency: transitive
+    description:
+      name: google_mlkit_commons
+      sha256: "42173a8ba89f386486cc5b8249e84da4a4b861daa70498373627d985eb418689"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.5.0"
+  google_mlkit_face_detection:
+    dependency: "direct main"
+    description:
+      name: google_mlkit_face_detection
+      sha256: "567339c67530b22b22917622df9bba40547a4719fa108819901f95ffb7cd3399"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.8.0"
+  google_mlkit_image_labeling:
+    dependency: "direct main"
+    description:
+      name: google_mlkit_image_labeling
+      sha256: "4397ee9a0eac47b08cc4795b4b8793fc4cc63b499090ba460ef6219cd90a9196"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.8.0"
+  google_mlkit_object_detection:
+    dependency: "direct main"
+    description:
+      name: google_mlkit_object_detection
+      sha256: "3828e1e53817cad4ed1e2db7bd76dc851841bb9cbe97b303f751cd400bea7541"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.9.0"
   gsettings:
     dependency: transitive
     description:
@@ -608,6 +648,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "3.0.2"
+  lints:
+    dependency: transitive
+    description:
+      name: lints
+      sha256: "12f842a479589fea194fe5c5a3095abc7be0c1f2ddfa9a0e76aed1dbd26a87df"
+      url: "https://pub.dev"
+    source: hosted
+    version: "6.1.0"
   logging:
     dependency: transitive
     description:
